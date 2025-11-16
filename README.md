@@ -3,7 +3,7 @@
 </h1>
 
 ## Hey! 👋
-I'm Anas, Founder of [Byte Bandits](https://bytebandits.in/) Tech solutions.
+I'm Anas 
 
 ## Skills
 - 👨‍💻 Languages: Python, Java, C, C++, HTML, CSS
