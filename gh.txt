@@ -1,24 +1,60 @@
-(.venv) PS E:\store-lay-bck> git remote -v
-origin  https://github.com/aanas-titan/store-lay-bck.git (fetch)
-origin  https://github.com/aanas-titan/store-lay-bck.git (push)
-upstream        https://github.com/anasicy/store-lay-bck.git (fetch)
-upstream        https://github.com/anasicy/store-lay-bck.git (push)
-(.venv) PS E:\store-lay-bck> git status
-On branch main
-Your branch is up to date with 'origin/main'.
+Setup / Model
 
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-        bk/__pycache__/ai_advisor.cpython-314.pyc
-        bk/__pycache__/dxf_processor.cpython-314.pyc
-        bk/__pycache__/layout_optimizer.cpython-314.pyc
+Switched the AI layout model from azure/gpt-4o to azure/gpt-5-mini.
+Code quality
+2. Cleared all Pylance/pyflakes diagnostics across backend files (type annotations, # type: ignore for false-positive ezdxf/shapely stubs, removed unused imports/vars).
 
-nothing added to commit but untracked files present (use "git add" to track)
-(.venv) PS E:\store-lay-bck> git log --oneline -10
-50ae102e (HEAD -> main, origin/main, origin/HEAD) q
-d8dad6bd ne file
-332779bc Merge branch 'main' of https://github.com/anasicy/store-lay-bck
-4ad3d121 errors file
-a911aca1 model change
-3d10faf3 first commit
-(.venv) PS E:\store-lay-bck> 
+Connectivity
+3. Diagnosed and fixed the SSL CERTIFICATE_VERIFY_FAILED error (corporate proxy issue — fixed via pip-system-certs, not a code change).
+4. Fixed finish_reason='length' empty-AI-response error by raising max_tokens 16384 → 32768 (GPT-5-mini burns tokens on hidden reasoning before writing output).
+
+Layout logic — single AI layout
+5. Changed from 3 generated layout variants to exactly 1 AI-generated layout.
+6. Made the AI aware of DXF obstacles (doors, columns) before placing fixtures, with a hard "no overlap with obstacles" rule.
+
+Placement bug fixes
+7. Fixed cash counter appearing even when not selected (added conditional + "don't invent" rule).
+8. Fixed BOH/clinic/cash/wall-fixture enforcement trusting the AI's self-reported zone field — switched all passes to match by fixture name instead (zone field was frequently wrong).
+9. Fixed fixtures silently vanishing — added overlap-aware relocation helpers (_fits, _find_slot_in_zone, _slide_along_wall) instead of blind relocation that caused silent overlap-cleanup deletions.
+10. Fixed stale "skipped" entries reappearing for fixtures that a later recovery pass successfully placed.
+
+BOH room cleanup
+11. Reduced "Fitting Room" from 2 instances to 1, then removed the "Fitting Room" category entirely (kept "Fitting Lab", a different room) — down to exactly 6 BOH room types.
+
+Compass / orientation
+12. Added a visual compass (N/S/E/W) to the 2D and 3D views.
+13. Hardcoded entrance = South; derived North/East/West purely from entrance wall (removed the old broken/unused north_direction setting).
+14. Added _detect_entrance_wall() to auto-detect entrance from the real DXF door position (previously stuck on a static default).
+15. Corrected _sw_corner() / SW-Vastu-corner math for all 4 entrance orientations.
+
+Zone-depth structural fix
+16. Found and fixed BOH/CLINIC zones being too shallow (fixed % of store depth) to physically fit their assigned rooms — added a minimum-depth floor, applied consistently across all 4 entrance orientations, with retail sub-zones made proportionally relative so they always nest correctly.
+
+Margin bugs (wall placement)
+17. Fixed _place_on_wall() margin mismatch (50 vs. required 100) — was causing 100% wall-fixture placement failure.
+18. Fixed the same margin mismatch in the wall-rotation and wall-snap enforcement passes in app.py.
+
+Frontend sync issues
+19. Discovered and fixed the actual bug: earlier edits had been made to an orphaned, unused duplicate RequirementsForm.jsx — the real component (fnt/src/components/RequirementsForm.jsx) still had the old has_fitting_rooms/north_direction bugs. Fixed the real file.
+20. Fixed stale "3 layout variants" text across 5 locations in app.jsx.
+
+Reference-image-guided layout
+21. Strengthened the AI prompt to actively mirror an uploaded reference CAD image's spatial patterns (BOH clustering, wall density, walkway cross, island/cash placement) rather than just using it as passive context.
+
+DXF export fixes
+22. Added entrance-door rendering to the exported DXF (previously never drawn at all).
+23. Fixed the door symbol shape to a closed swing-wedge (matching the 2D preview), with defensive guards against degenerate/cross-shaped artifacts.
+24. Added a polygon-aware safety-net nudge for fixtures landing in non-rectangular notches.
+
+Boundary/containment hardening
+25. Tightened polygon-containment threshold from 85% → 98% across all 3 enforcement points.
+26. Fixed all 3 polygon checks failing open (silently accepting) on a Shapely exception — now fail closed (reject).
+
+BOH clustering rewrite
+27. Rewrote BOH room placement from a fragile per-item cursor to a single shelf-pack of all BOH rooms together (biggest-first), ignoring not-yet-relocated wall fixtures as false obstacles.
+
+Wall-fixture zone bleed
+28. Added a new pass constraining left/right-wall fixtures' Y-position to stay within the retail band, since prior passes only fixed X/rotation and let them drift into the CLINIC/BOH zone.
+
+Per-clinic type bug
+29. Fixed clinic rooms all being labeled/sized as a single legacy clinic_type, ignoring the per-clinic clinic_types array — Phoropter + Normal selections now produce correctly distinct rooms.
