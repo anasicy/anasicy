@@ -1,1 +1,24 @@
+(.venv) PS E:\store-lay-bck> git remote -v
+origin  https://github.com/aanas-titan/store-lay-bck.git (fetch)
+origin  https://github.com/aanas-titan/store-lay-bck.git (push)
+upstream        https://github.com/anasicy/store-lay-bck.git (fetch)
+upstream        https://github.com/anasicy/store-lay-bck.git (push)
+(.venv) PS E:\store-lay-bck> git status
+On branch main
+Your branch is up to date with 'origin/main'.
 
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        bk/__pycache__/ai_advisor.cpython-314.pyc
+        bk/__pycache__/dxf_processor.cpython-314.pyc
+        bk/__pycache__/layout_optimizer.cpython-314.pyc
+
+nothing added to commit but untracked files present (use "git add" to track)
+(.venv) PS E:\store-lay-bck> git log --oneline -10
+50ae102e (HEAD -> main, origin/main, origin/HEAD) q
+d8dad6bd ne file
+332779bc Merge branch 'main' of https://github.com/anasicy/store-lay-bck
+4ad3d121 errors file
+a911aca1 model change
+3d10faf3 first commit
+(.venv) PS E:\store-lay-bck> 
